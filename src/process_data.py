@@ -2,12 +2,23 @@ import pandas as pd
 
 def calculate_delays(df):
     # Create a new column for total delays
-    # df['TOTAL_DELAY'] = df['DEP_DELAY'] + df['ARR_DELAY']
-    df['ttl_delay'] = df['arr_delay'] + df['carrier_delay'] + df['weather_delay']
-    + df['nas_delay'] + df['security_delay'] + df['late_aircraft_delay']
-
+    df['ttl_delay'] = df['atc_delay'] + df['operational_delay'] + df['weather_delay']
+    + df['technical_delay'] + df['security_delay'] 
     return df
 
-def average_delay_by_airline(df):
-    return df.groupby('AIRLINE')['arr_delay', 'carrier_delay', 'weather_delay',
-                                  'nas_delay', 'security_delay','late_aircraft_delay'].mean()
+def average_delay(df):
+    return df.groupby('Airline')['ttl_delay'].mean().round(2).reset_index()
+
+def clean_flight_data(filePath):
+    df = pd.read_csv(filePath)
+    print(df)
+    
+    # Drop rows with missing values
+    df = df.dropna()
+    print(df)
+
+    # Convert time columns to datetime
+    df['Scheduled Departure Time'] = pd.to_datetime(df['Scheduled Departure Time'], errors='coerce')
+    df['Actual Departure Time'] = pd.to_datetime(df['Actual Departure Time'], errors='coerce')
+
+    return df
