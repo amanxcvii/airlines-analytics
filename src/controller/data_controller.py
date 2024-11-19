@@ -1,4 +1,5 @@
 from functools import lru_cache
+from flask import jsonify
 from src.process_data import calculate_delays, average_delay, clean_flight_data
 
 
@@ -24,6 +25,30 @@ class DataController:
             delay_breakdown = [{"reason": col, "value": total_delays[col]} for col in delay_columns]  # List of dicts
             return delay_breakdown
 
+        @self.app.route('/get_delay_flight_data/<string:airline>', methods=['GET'])
+        @lru_cache
+        def get_delay_flight_data(airline):
+            df = self.get_data()
+            airline_df = df[df['Airline'] == airline]
+
+            if airline_df.empty:
+                return jsonify({'error': f'No data found for airline: {airline}'}), 404
+
+            rows = airline_df.to_dict(orient='records')
+
+            data = []
+            for row in rows:
+                data.append({
+                    'date': row['Date'],
+                    'flightNumber': row['Flight Number'],
+                    'origin': row['Origin'],
+                    'destination': row['Destination'],
+                    'scheduledDeparture': row['Scheduled Departure Time'],
+                    'actualDeparture': row['Actual Departure Time'],
+                    'delay': row['ttl_delay']
+            })
+            return jsonify(data)
+        
         @self.app.route('/get_insights', methods=['GET'])
         def get_insights():
             df = self.get_data()
